@@ -63,6 +63,44 @@ public class ConsoleChatProgrammatic {
                 }
             }
         }
+
+        summarizeAndSave(history, model);
+    }
+
+    private static void summarizeAndSave(List<ChatMessage> history, ChatModel model) {
+        boolean hasConversation = history.stream().anyMatch(m -> m instanceof UserMessage);
+        if (!hasConversation) {
+            return;
+        }
+        System.out.println("Summarizing conversation...");
+        String transcript = buildTranscript(history);
+        List<ChatMessage> summaryRequest = List.of(
+                SystemMessage.from("Summarize the following conversation. Preserve: key topics and results, " +
+                        "the exact final state of any ongoing task or calculation (so the user can continue " +
+                        "with follow-up questions like 'and add 5?' without losing context), and any other " +
+                        "information needed to seamlessly continue in a new session. Be concise."),
+                UserMessage.from(transcript)
+        );
+        AiMessage summaryResponse = model.chat(summaryRequest.toArray(ChatMessage[]::new)).aiMessage();
+        String summary = summaryResponse.text();
+
+        List<ChatMessage> summaryHistory = new ArrayList<>();
+        summaryHistory.add(UserMessage.from("[Previous session summary]\n" + summary));
+        summaryHistory.add(AiMessage.from("Understood. I have the context from our previous session and am ready to continue."));
+        saveHistory(summaryHistory);
+        System.out.println("Summary saved.");
+    }
+
+    private static String buildTranscript(List<ChatMessage> history) {
+        StringBuilder sb = new StringBuilder();
+        for (ChatMessage msg : history) {
+            switch (msg) {
+                case UserMessage m  -> sb.append("User: ").append(m.singleText()).append("\n");
+                case AiMessage m    -> sb.append("Assistant: ").append(m.text()).append("\n");
+                default             -> {}
+            }
+        }
+        return sb.toString();
     }
 
     private static List<ChatMessage> loadHistory() {
