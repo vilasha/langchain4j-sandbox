@@ -95,9 +95,10 @@ public class ConsoleChatProgrammatic {
         StringBuilder sb = new StringBuilder();
         for (ChatMessage msg : history) {
             switch (msg) {
-                case UserMessage m  -> sb.append("User: ").append(m.singleText()).append("\n");
-                case AiMessage m    -> sb.append("Assistant: ").append(m.text()).append("\n");
-                default             -> {}
+                case UserMessage m -> sb.append("User: ").append(m.singleText()).append("\n");
+                case AiMessage m -> sb.append("Assistant: ").append(m.text()).append("\n");
+                default -> {
+                }
             }
         }
         return sb.toString();
@@ -138,8 +139,8 @@ public class ConsoleChatProgrammatic {
         static MessageRecord fromChatMessage(ChatMessage message) {
             return switch (message) {
                 case SystemMessage m -> new MessageRecord("SYSTEM", m.text());
-                case UserMessage m   -> new MessageRecord("USER", m.singleText());
-                case AiMessage m     -> new MessageRecord("AI", m.text());
+                case UserMessage m -> new MessageRecord("USER", m.singleText());
+                case AiMessage m -> new MessageRecord("AI", m.text());
                 default -> throw new IllegalArgumentException("Unsupported message type: " + message.getClass());
             };
         }
@@ -147,8 +148,8 @@ public class ConsoleChatProgrammatic {
         ChatMessage toChatMessage() {
             return switch (type) {
                 case "SYSTEM" -> SystemMessage.from(text);
-                case "USER"   -> UserMessage.from(text);
-                case "AI"     -> AiMessage.from(text);
+                case "USER" -> UserMessage.from(text);
+                case "AI" -> AiMessage.from(text);
                 default -> throw new IllegalArgumentException("Unknown message type in history: " + type);
             };
         }

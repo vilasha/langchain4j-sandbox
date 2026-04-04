@@ -92,9 +92,11 @@ public class ConsoleChatDeclarative {
         StringBuilder sb = new StringBuilder();
         for (ChatMessage msg : messages) {
             switch (msg) {
-                case dev.langchain4j.data.message.UserMessage m -> sb.append("User: ").append(m.singleText()).append("\n");
+                case dev.langchain4j.data.message.UserMessage m ->
+                        sb.append("User: ").append(m.singleText()).append("\n");
                 case AiMessage m -> sb.append("Assistant: ").append(m.text()).append("\n");
-                default -> {}
+                default -> {
+                }
             }
         }
         return sb.toString();
