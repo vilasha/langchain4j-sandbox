@@ -1,5 +1,6 @@
 package org.maria.testbox.console.chat;
 
+import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ChatMessageJsonCodec;
 import dev.langchain4j.data.message.JacksonChatMessageJsonCodec;
@@ -35,13 +36,17 @@ public class ConsoleChatDeclarative {
                 .apiKey(dotenv.get("OPENAI_API_KEY"))
                 .modelName(OpenAiChatModelName.GPT_4_O_MINI)
                 .build();
+        FileChatMemoryStore store = new FileChatMemoryStore(HISTORY_FILE);
         ChatMemory memory = MessageWindowChatMemory.builder()
                 .maxMessages(MEMORY_WINDOW)
-                .chatMemoryStore(new FileChatMemoryStore(HISTORY_FILE))
+                .chatMemoryStore(store)
                 .build();
         ChatService service = AiServices.builder(ChatService.class)
                 .chatModel(model)
                 .chatMemory(memory)
+                .build();
+        SummaryService summaryService = AiServices.builder(SummaryService.class)
+                .chatModel(model)
                 .build();
 
         System.out.println("Chat started. Type 'exit' or press Enter on an empty line to quit.");
@@ -63,11 +68,51 @@ public class ConsoleChatDeclarative {
                 }
             }
         }
+
+        summarizeAndSave(memory, store, summaryService);
+    }
+
+    private static void summarizeAndSave(ChatMemory memory, FileChatMemoryStore store, SummaryService summaryService) {
+        List<ChatMessage> messages = memory.messages();
+        boolean hasConversation = messages.stream().anyMatch(m -> m instanceof dev.langchain4j.data.message.UserMessage);
+        if (!hasConversation) {
+            return;
+        }
+        System.out.println("Summarizing conversation...");
+        String transcript = buildTranscript(messages);
+        String summary = summaryService.summarize(transcript);
+        store.updateMessages(memory.id(), List.of(
+                dev.langchain4j.data.message.UserMessage.from("[Previous session summary]\n" + summary),
+                AiMessage.from("Understood. I have the context from our previous session and am ready to continue.")
+        ));
+        System.out.println("Summary saved.");
+    }
+
+    private static String buildTranscript(List<ChatMessage> messages) {
+        StringBuilder sb = new StringBuilder();
+        for (ChatMessage msg : messages) {
+            switch (msg) {
+                case dev.langchain4j.data.message.UserMessage m ->
+                        sb.append("User: ").append(m.singleText()).append("\n");
+                case AiMessage m -> sb.append("Assistant: ").append(m.text()).append("\n");
+                default -> {
+                }
+            }
+        }
+        return sb.toString();
     }
 
     interface ChatService {
         @SystemMessage(SYSTEM_PROMPT)
         String chat(@UserMessage String content);
+    }
+
+    interface SummaryService {
+        @SystemMessage("Summarize the following conversation. Preserve: key topics and results, " +
+                "the exact final state of any ongoing task or calculation (so the user can continue " +
+                "with follow-up questions like 'and add 5?' without losing context), and any other " +
+                "information needed to seamlessly continue in a new session. Be concise.")
+        String summarize(@UserMessage String transcript);
     }
 
     static class FileChatMemoryStore implements ChatMemoryStore {
