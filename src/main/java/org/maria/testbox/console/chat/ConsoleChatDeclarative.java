@@ -27,7 +27,7 @@ import java.util.Scanner;
 public class ConsoleChatDeclarative {
     private static final int MEMORY_WINDOW = 20;
     private static final String SYSTEM_PROMPT = "You are a helpful assistant";
-    private static final String HISTORY_FILE = "chat-history-declarative.json";
+    private static final String HISTORY_FILE = "src/main/resources/chat-history-declarative.json";
 
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.load();

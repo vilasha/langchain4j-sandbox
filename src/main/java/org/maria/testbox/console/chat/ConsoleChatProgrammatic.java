@@ -26,7 +26,7 @@ import java.util.Scanner;
 
 public class ConsoleChatProgrammatic {
     private static final String SYSTEM_PROMPT = "You are a helpful assistant";
-    private static final String HISTORY_FILE = "chat-history-programmatic.json";
+    private static final String HISTORY_FILE = "src/main/resources/chat-history-programmatic.json";
     private static final ObjectMapper MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     public static void main(String[] args) {
@@ -84,7 +84,7 @@ public class ConsoleChatProgrammatic {
         Path path = Path.of(HISTORY_FILE);
         List<MessageRecord> records = history.stream().map(MessageRecord::fromChatMessage).toList();
         try {
-            MAPPER.writeValue(path.toFile(), records);
+            Files.writeString(path, MAPPER.writeValueAsString(records));
         } catch (IOException e) {
             throw new RuntimeException("Failed to save chat history to " + path, e);
         }
