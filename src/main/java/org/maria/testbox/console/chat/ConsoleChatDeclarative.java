@@ -8,6 +8,9 @@ import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.exception.HttpException;
+import dev.langchain4j.exception.RateLimitException;
+import dev.langchain4j.exception.TimeoutException;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import java.util.Scanner;
@@ -38,8 +41,12 @@ public class ConsoleChatDeclarative {
                 }
                 try {
                     System.out.println(service.chat(input));
-                } catch (Exception e) {
-                    System.err.println("Error: " + e.getMessage());
+                } catch (RateLimitException e) {
+                    System.err.println("Rate limit reached, try again later: " + e.getMessage());
+                } catch (TimeoutException e) {
+                    System.err.println("Request timed out: " + e.getMessage());
+                } catch (HttpException e) {
+                    System.err.println("HTTP error (" + e.statusCode() + "): " + e.getMessage());
                 }
             }
         }
